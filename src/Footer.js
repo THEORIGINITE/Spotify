@@ -1,5 +1,7 @@
-import React from 'react';
+import React,{useEffect} from 'react';
 import './Footer.css';
+import {useDataLayerValue} from './DataLayer';
+import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
 import PlaylistPlayIcon from '@material-ui/icons/PlaylistPlay';
 import VolumeDownIcon from '@material-ui/icons/VolumeDown';
 import PlayCircleFilledWhiteOutlinedIcon from '@material-ui/icons/PlayCircleFilledWhiteOutlined';
@@ -11,7 +13,72 @@ import RepeatOutlinedIcon from '@material-ui/icons/RepeatOutlined';
 import { Grid, Slider,IconButton } from '@material-ui/core';
 
 
-function Footer() {
+function Footer({spotify}) {
+    const [{ token, item, playing }, dispatch]= useDataLayerValue() ;
+    
+    useEffect(() => {
+        spotify.getMyCurrentPlaybackState().then((r) => {
+          console.log(r);
+    
+          dispatch({
+            type: "SET_PLAYING",
+            playing: r.is_playing,
+          });
+    
+          dispatch({
+            type: "SET_ITEM",
+            item: r.item,
+          });
+        });
+      }, [spotify]);
+    
+      const handlePlayPause = () => {
+        if (playing) {
+          spotify.pause();
+          dispatch({
+            type: "SET_PLAYING",
+            playing: false,
+          });
+        } else {
+          spotify.play();
+          dispatch({
+            type: "SET_PLAYING",
+            playing: true,
+          });
+        }
+      };
+    
+      const skipNext = () => {
+        spotify.skipToNext();
+        spotify.getMyCurrentPlayingTrack().then((r) => {
+          dispatch({
+            type: "SET_ITEM",
+            item: r.item,
+          });
+          dispatch({
+            type: "SET_PLAYING",
+            playing: true,
+          });
+        });
+      };
+    
+      const skipPrevious = () => {
+        spotify.skipToPrevious();
+        spotify.getMyCurrentPlayingTrack().then((r) => {
+          dispatch({
+            type: "SET_ITEM",
+            item: r.item,
+          });
+          dispatch({
+            type: "SET_PLAYING",
+            playing: true,
+          });
+        });
+      };
+    
+
+
+
     return (
         <div className="footer">
             <div className="footer_left">
@@ -23,11 +90,23 @@ function Footer() {
             </div>
             <div className="footer_center">
                  <ShuffleOutlinedIcon  className="footer_green"/>
-                <SkipPreviousOutlinedIcon  className="footer_icon"/>
+                <SkipPreviousOutlinedIcon onClick={skipNext}  className="footer_icon"/>
                 <IconButton>
-                  <PlayCircleFilledWhiteOutlinedIcon style={{ fontSize: 50 }} className="footer_green"/>
-                </IconButton>
-                <SkipNextOutlinedIcon  className="footer_icon"/>
+                {playing ? (
+                <PauseCircleOutlineIcon
+                  onClick={handlePlayPause}
+                  fontSize="large"
+                  className="footer_icon"
+                />
+            ) : (
+                <PlayCircleFilledWhiteOutlinedIcon
+                  onClick={handlePlayPause}
+                  fontSize="large"
+                  className="footer_icon"
+                />
+            )}   
+                 </IconButton>
+                <SkipNextOutlinedIcon onClick={skipPrevious} className="footer_icon"/>
                 <RepeatOutlinedIcon className="footer_green"/>
             </div>
             <div className="footer_right">

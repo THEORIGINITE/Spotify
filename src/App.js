@@ -1,66 +1,69 @@
-import React ,{useEffect,useState} from 'react'
-import './App.css';
-import Login from './Login';
-import Player from './Player';
-import {useDataLayerValue} from './DataLayer';
-import Spotifywebapi from 'spotify-web-api-js';
-import { getTokenFromUrl } from './spotify';
+import React, { useEffect } from "react";
+import SpotifyWebApi from "spotify-web-api-js";
+import { useDataLayerValue } from "./DataLayer";
+import Player from "./Player";
+import { getTokenFromUrl } from "./spotify";
+import "./App.css";
+import Login from "./Login";
 
-const Spotify = new Spotifywebapi();
+const s = new SpotifyWebApi();
 
 function App() {
- const [{user,token},dispatch] = useDataLayerValue();
-  useEffect(()=>{
-  const hash = getTokenFromUrl();
-  window.location.hash= "";
- 
-  const _token = hash.access_token;
- if(_token){
+  const [{ token }, dispatch] = useDataLayerValue();
 
-   dispatch({
-     type:'SET_TOKEN',
-     token:_token
-   })
+  useEffect(() => {
+    // Set token
+    const hash = getTokenFromUrl();
+    window.location.hash = "";
+    let _token = hash.access_token;
 
-   Spotify.setAccessToken(_token);
-   Spotify.getMe().then(user =>{
+    if (_token) {
+      s.setAccessToken(_token);
 
+      dispatch({
+        type: "SET_TOKEN",
+        token: _token,
+      });
 
-    dispatch({
-      type:'SET_USER',
-      user:user
-    });
+      s.getPlaylist("7DYHoZ1j8X5mV0jx9otUnw").then((response) =>
+        dispatch({
+          type: "SET_DISCOVER_WEEKLY",
+          discover_weekly: response,
+        })
+      );
 
-   });
-   Spotify.getUserPlaylists().then((playlists)=>{
-     dispatch({
-       type:'SET_PLAYLISTS',
-       playlists:playlists
-     });
-   });
+      s.getMyTopArtists().then((response) =>
+        dispatch({
+          type: "SET_TOP_ARTISTS",
+          top_artists: response,
+        })
+      );
 
-   Spotify.getPlaylist('7DYHoZ1j8X5mV0jx9otUnw').then((response)=>{
-     dispatch({
-     type:'SET_DISCOVER_WEEKLY',
-     discover_weekly:response
-     });
-   });
- }
-  },[]);
+      dispatch({
+        type: "SET_SPOTIFY",
+        spotify: s,
+      });
 
-  console.log(user);
-  console.log(token);
- 
+      s.getMe().then((user) => {
+        dispatch({
+          type: "SET_USER",
+          user,
+        });
+      });
+
+      s.getUserPlaylists().then((playlists) => {
+        dispatch({
+          type: "SET_PLAYLISTS",
+          playlists,
+        });
+      });
+    }
+  }, [token, dispatch]);
+
   return (
-    <div className="App">
-      {
-        user?(
-        <Player spotify={Spotify}/>
-        ):(
-        <Login/>
-        )
-      }
-     
+    <div className="app">
+      {!token && <Login />}
+      {token && <Player spotify={s} />}
     </div>
   );
 }

@@ -12,7 +12,7 @@ function Header({spotify}) {
                <input type="text" placeholder="Search for Artist , Songs or album"/>
             </div>
             <div className="header_right">
-              <Avatar src={user?.images[0]?.url} alt={user?.display_name}/>
+              <Avatar alt={user?.display_name}/>
               <h4>{user?.display_name}</h4>
             </div>
         </div>
